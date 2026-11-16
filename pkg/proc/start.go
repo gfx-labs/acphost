@@ -269,6 +269,9 @@ func (p *Process) start(s Spec, o options) error {
 	if err := start(); err != nil {
 		return err
 	}
+	if p.scope != nil {
+		raiseOOMScore(cmd.Process.Pid)
+	}
 	// pasta runs its command only after configuring the namespace, so a
 	// started process here means pasta started; a pasta failure later
 	// shows as the command's exit.
