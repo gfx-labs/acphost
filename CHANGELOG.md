@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.0](https://github.com/gfx-labs/acphost/compare/v0.27.0...v0.28.0) (2026-11-16)
+
+
+### Features
+
+* **acphost:** add Reopen to load or summarize after a host restart ([#306](https://github.com/gfx-labs/acphost/issues/306)) ([#307](https://github.com/gfx-labs/acphost/issues/307)) ([fc1ada7](https://github.com/gfx-labs/acphost/commit/fc1ada7d52e35e76e663949d2fc2e82fb2fc4ed6))
+
 ## [0.27.0](https://github.com/gfx-labs/acphost/compare/v0.26.0...v0.27.0) (2026-11-13)
 
 
