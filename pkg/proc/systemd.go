@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -140,4 +142,25 @@ func (s *systemdScope) remove() {
 	}
 	_ = s.stdin.Close()
 	_ = s.holder.Wait()
+}
+
+// agentOOMScoreAdj is the oom_score_adj the command gets in a systemd
+// scope. The holder shares the scope's memory.max, and when the command
+// hits it the kernel has sometimes killed the holder too: the scope was
+// then collected before the stats were read and the OOM kill was lost
+// (#320). A higher score makes the command the victim first.
+const agentOOMScoreAdj = 500
+
+// raiseOOMScore raises pid's oom_score_adj to agentOOMScoreAdj. A
+// process may raise its score without privilege, never lower it, and what
+// the command forks later inherits it. Best effort: if the write fails
+// the command runs as before.
+func raiseOOMScore(pid int) {
+	path := fmt.Sprintf("/proc/%d/oom_score_adj", pid)
+	if b, err := os.ReadFile(path); err == nil {
+		if n, err := strconv.Atoi(strings.TrimSpace(string(b))); err == nil && n >= agentOOMScoreAdj {
+			return
+		}
+	}
+	_ = os.WriteFile(path, []byte(strconv.Itoa(agentOOMScoreAdj)), 0)
 }
