@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.29.1](https://github.com/gfx-labs/acphost/compare/v0.29.0...v0.29.1) (2026-11-16)
+
+
+### Documentation
+
+* add upgrade guide v0.22 to v0.28 ([#312](https://github.com/gfx-labs/acphost/issues/312)) ([#315](https://github.com/gfx-labs/acphost/issues/315)) ([0937bac](https://github.com/gfx-labs/acphost/commit/0937bac8ffdb2cddab88cb82903f80e6e7de0eb1))
+* link the v0.22 to v0.28 guide and list releases to v0.29.0 ([#313](https://github.com/gfx-labs/acphost/issues/313)) ([#318](https://github.com/gfx-labs/acphost/issues/318)) ([f4faf55](https://github.com/gfx-labs/acphost/commit/f4faf5544d347f7a9c01a85c18ad235c0f4b3723))
+* use the old module path in the v0.6 to v0.22 guide ([#314](https://github.com/gfx-labs/acphost/issues/314)) ([#316](https://github.com/gfx-labs/acphost/issues/316)) ([91b5343](https://github.com/gfx-labs/acphost/commit/91b53430eb20854580aedfa0edbf83f48157b148))
+
 ## [0.29.0](https://github.com/gfx-labs/acphost/compare/v0.28.0...v0.29.0) (2026-11-16)
 
 
