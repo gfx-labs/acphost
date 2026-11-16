@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.2](https://github.com/gfx-labs/acphost/compare/v0.29.1...v0.29.2) (2026-11-16)
+
+
+### Bug fixes
+
+* **proc:** keep the systemd scope holder alive through an OOM kill ([#320](https://github.com/gfx-labs/acphost/issues/320)) ([#321](https://github.com/gfx-labs/acphost/issues/321)) ([9dba023](https://github.com/gfx-labs/acphost/commit/9dba02353d34f6cfb60c613d5a3442aa4c08f088))
+
 ## [0.29.1](https://github.com/gfx-labs/acphost/compare/v0.29.0...v0.29.1) (2026-11-16)
 
 
