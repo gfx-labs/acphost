@@ -82,6 +82,12 @@ type Host struct {
 	initResult   json.RawMessage
 	turnEnds     [][]byte // turn_end notifications waiting for a controller
 	prompts      int      // session/prompt calls in flight
+	// v2 is set once the agent's initialize result names ACP protocol
+	// version 2. A v2 prompt result only says the prompt was accepted; the
+	// turn runs until a state_update reports idle.
+	v2         bool
+	running    bool   // v2: the last state_update was running or requires_action
+	pendingEnd []byte // v2: turn_end to send after the current agent frame
 
 	stopOnce   sync.Once
 	stopping   chan struct{}
@@ -572,9 +578,62 @@ func (h *Host) readAgent(r io.Reader) error {
 			// before it are replayed first; only notifications may drop.
 			conn.send(outItem{line: out, seq: h.seq, end: h.off, drop: isNotificationFrame(f) && bytes.Equal(out, line)})
 		}
+		if te := h.pendingEnd; te != nil {
+			// After the idle update itself, so the controller has the
+			// turn's last output first.
+			h.pendingEnd = nil
+			if h.conn != nil {
+				h.conn.send(outItem{line: te})
+			} else {
+				h.turnEnds = append(h.turnEnds, te)
+			}
+		}
 		h.mu.Unlock()
 	}
 	return sc.Err()
+}
+
+// v2State tracks a v2 state_update. When foreground work goes idle it
+// returns the turn_end notification, whose result carries the stop reason
+// as a v1 prompt result would. Holding h.mu.
+func (h *Host) v2State(line []byte) []byte {
+	var n struct {
+		Params struct {
+			Update struct {
+				Kind       string          `json:"sessionUpdate"`
+				State      string          `json:"state"`
+				StopReason json.RawMessage `json:"stopReason"`
+			} `json:"update"`
+		} `json:"params"`
+	}
+	if json.Unmarshal(line, &n) != nil || n.Params.Update.Kind != "state_update" {
+		return nil
+	}
+	up := n.Params.Update
+	if up.State != "idle" {
+		h.running = up.State == "running" || up.State == "requires_action"
+		return nil
+	}
+	if !h.running {
+		return nil
+	}
+	h.running = false
+	res := map[string]json.RawMessage{}
+	if len(up.StopReason) > 0 && string(up.StopReason) != "null" {
+		res["stopReason"] = up.StopReason
+	}
+	b, _ := json.Marshal(res)
+	return notification(h.spec.method("turn_end"), TurnEnd{Result: b})
+}
+
+// protocolVersion is the protocolVersion of an initialize result, 0 if
+// it has none.
+func protocolVersion(result json.RawMessage) int {
+	var r struct {
+		ProtocolVersion int `json:"protocolVersion"`
+	}
+	_ = json.Unmarshal(result, &r)
+	return r.ProtocolVersion
 }
 
 func isNotificationFrame(f frame) bool { return f.Method != "" && len(f.ID) == 0 }
@@ -592,9 +651,16 @@ func (h *Host) routeAgent(f frame, line []byte) ([]byte, *controllerConn) {
 		delete(h.calls, key)
 		if call.method == "initialize" && len(f.Result) > 0 {
 			h.initResult = f.Result
+			h.v2 = protocolVersion(f.Result) == 2
 		}
 		if call.method == "session/prompt" {
 			h.prompts--
+		}
+		// v2: a successful prompt result is only an acknowledgement; the
+		// turn's end is the idle state_update.
+		v2Ack := call.method == "session/prompt" && h.v2 && len(f.Error) == 0
+		if call.method == "session/prompt" && h.v2 && !v2Ack {
+			h.running = false // a rejected prompt started no turn
 		}
 		if h.conn != nil && h.conn.gen == call.gen {
 			out, err := setID(line, call.origID)
@@ -603,7 +669,7 @@ func (h *Host) routeAgent(f frame, line []byte) ([]byte, *controllerConn) {
 			}
 			return out, h.conn
 		}
-		if call.method == "session/prompt" {
+		if call.method == "session/prompt" && !v2Ack {
 			// The controller that asked is gone; tell whoever is next.
 			te := notification(h.spec.method("turn_end"), TurnEnd{Result: f.Result, Error: f.Error})
 			if h.conn != nil {
@@ -631,6 +697,9 @@ func (h *Host) routeAgent(f frame, line []byte) ([]byte, *controllerConn) {
 	default:
 		// Notifications (session/update) go to the live controller; they are
 		// in the journal either way, so nothing is lost while detached.
+		if h.v2 && f.Method == "session/update" {
+			h.pendingEnd = h.v2State(line)
+		}
 		return line, h.conn
 	}
 }
@@ -730,7 +799,7 @@ func (h *Host) serveConn(nc net.Conn) {
 	h.conn = conn
 	w := Welcome{
 		Protocol: Protocol, Pid: os.Getpid(), AgentPid: h.agentPid,
-		Busy: h.prompts > 0, Seq: h.seq, Initialize: h.initResult,
+		Busy: h.prompts > 0 || h.running, Seq: h.seq, Initialize: h.initResult,
 		MethodPrefix: MethodName(h.spec.MethodPrefix, ""),
 	}
 	wb, _ := json.Marshal(w)
@@ -819,6 +888,9 @@ func (h *Host) fromController(c *controllerConn, line []byte) {
 		h.calls[hid] = pendingCall{gen: c.gen, origID: f.ID, method: f.Method}
 		if f.Method == "session/prompt" {
 			h.prompts++
+			// v2: the turn is foreground work from now, even if the agent
+			// acknowledges the prompt before it reports running.
+			h.running = h.running || h.v2
 		}
 		var err error
 		if line, err = setID(line, json.RawMessage(hid)); err != nil {

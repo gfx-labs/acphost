@@ -96,6 +96,8 @@ type sessionUpdate struct {
 		ToolCallID string `json:"toolCallId"`
 		Title      string `json:"title"`
 		Status     string `json:"status"`
+		State      string `json:"state"`      // v2 state_update
+		StopReason string `json:"stopReason"` // v2 state_update
 		Entries    []struct {
 			Content string `json:"content"`
 			Status  string `json:"status"`
@@ -114,7 +116,7 @@ func (r *Renderer) Render(fr Frame) {
 	}
 	switch {
 	case m.Method == "session/update":
-		r.update(m.Params)
+		r.update(fr, m.Params)
 	case m.Method == "session/prompt":
 		var p struct {
 			Prompt []struct {
@@ -142,7 +144,7 @@ func (r *Renderer) Render(fr Frame) {
 	}
 }
 
-func (r *Renderer) update(params json.RawMessage) {
+func (r *Renderer) update(fr Frame, params json.RawMessage) {
 	var u sessionUpdate
 	if json.Unmarshal(params, &u) != nil {
 		return
@@ -175,6 +177,11 @@ func (r *Renderer) update(params json.RawMessage) {
 		r.line("[plan]")
 		for _, e := range up.Entries {
 			r.line(fmt.Sprintf("  %s %s", planMark(e.Status), e.Content))
+		}
+	case "state_update":
+		// ACP v2 ends a turn here, not in the prompt result.
+		if up.State == "idle" && up.StopReason != "" {
+			r.line(fmt.Sprintf("=== turn end %s: %s", stamp(fr.T), up.StopReason))
 		}
 	}
 }
