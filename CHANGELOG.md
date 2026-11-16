@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.0](https://github.com/gfx-labs/acphost/compare/v0.28.0...v0.29.0) (2026-11-16)
+
+
+### Features
+
+* **acphost:** end turns on the idle state_update when ACP v2 is negotiated ([#310](https://github.com/gfx-labs/acphost/issues/310)) ([989bc38](https://github.com/gfx-labs/acphost/commit/989bc38d3fa018a761f755492a0b80e58774377c))
+
 ## [0.28.0](https://github.com/gfx-labs/acphost/compare/v0.27.0...v0.28.0) (2026-11-16)
 
 
