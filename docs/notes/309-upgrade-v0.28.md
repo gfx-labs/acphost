@@ -49,3 +49,21 @@ No code changed.
 - The v0.6-v0.22 guide says `go get github.com/gfx-labs/acphost@v0.22.0`
   and "the module path is unchanged", true only after v0.24. Out of scope
   here; filed as #314.
+
+## README part (#313, items 3-4)
+
+2026-11-16. README "Upgrading" links `docs/upgrade-v0.22-v0.28.md` and has
+two more steps (module path v0.24, session commands to acpc v0.27). The
+sentence on `Protocol` now says "1 in every release to date (v0.1.0 to
+v0.29.0)": checked for v0.22 to v0.29 above, v0.1 to v0.22 in the older
+guide.
+
+"Release notes" had v0.22.1 as its newest entry (newest first). It now has
+one entry per release v0.22.2 to v0.29.0, from CHANGELOG.md: dates and
+issue numbers were compared with it by script (dates) and by `grep` (each
+issue). v0.25.0, v0.25.1 and v0.26.0 have no issue number in CHANGELOG, so
+none is given. No `docs/notes/NNN-release-*.md` was added: release-please
+owns releases (#261). v0.29.1 is not released yet, so it has no entry.
+
+Not done: the section still skips v0.11.0 to v0.21.0, which were never
+listed. #313 asked for v0.22.2 onward.

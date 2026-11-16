@@ -75,8 +75,9 @@ Packages are under `pkg/`:
 
 ### Upgrading
 
-From v0.6 to v0.22: [docs/upgrade-v0.6-v0.22.md](docs/upgrade-v0.6-v0.22.md),
-with old and new code for each breaking change. In short:
+From v0.6 to v0.22: [docs/upgrade-v0.6-v0.22.md](docs/upgrade-v0.6-v0.22.md).
+From v0.22 to v0.28: [docs/upgrade-v0.22-v0.28.md](docs/upgrade-v0.22-v0.28.md).
+Both give old and new code for each breaking change. In short:
 
 1. Call `acphost.MaybeChild()` first in `main` and in `TestMain`
    (v0.11).
@@ -89,8 +90,14 @@ with old and new code for each breaking change. In short:
 4. Use `proc.Open(dir)`, `proc.LockFile` and `proc.SupervisorPidFile`
    instead of `acphost.LockFile` and `acphost.PidFile`, and stop hosts
    started by a build before v0.17 before deploying (v0.20).
+5. Change the module path from `github.com/elee1766/acphost` to
+   `github.com/gfx-labs/acphost` in imports, `go.mod` and `go install`
+   lines. Releases from v0.24.0 exist only under the new path (v0.24).
+6. Use [acpc](https://github.com/gfx-labs/acpc) for the `new`, `prompt`,
+   `exec`, `attach`, `cancel`, `ls` and `rm` commands, which left the
+   `acphost` CLI (v0.27; they were only in v0.25 and v0.26).
 
-`Protocol` is 1 throughout. From v0.3: `docs/notes/68-upgrade-v0.3-v0.6.md`.
+`Protocol` is 1 in every release to date (v0.1.0 to v0.29.0). From v0.3: `docs/notes/68-upgrade-v0.3-v0.6.md`.
 
 ## Library quick start
 
@@ -916,6 +923,57 @@ for Main and removes supervisor.pid. While Main runs its SIGTERM and SIGINT
 handlers apply to the whole test process. See `docs/notes/114-acphosttest.md`.
 
 ## Release notes
+
+v0.29.0 (2026-11-16): ACP v2 turns end on the idle `state_update`.
+`Protocol` stays 1. Details in `docs/notes/2026-11-16-acp-v2-turns.md`.
+
+- `turn_end` follows the idle `state_update` when ACP v2 is negotiated
+  (#310).
+
+v0.28.0 (2026-11-16): `Reopen`. `Protocol` stays 1. Details in
+`docs/notes/306-reopen.md`.
+
+- `acphost.Reopen` loads the session or summarizes the journal into a
+  new one after a host restart (#306, #307).
+
+v0.27.0 (2026-11-13): BREAKING for CLI users. `Protocol` stays 1.
+Details in `docs/notes/2026-11-13-session-cli-to-acpc.md`.
+
+- `new`, `prompt`, `exec`, `attach`, `cancel`, `ls` and `rm` moved to
+  [acpc](https://github.com/gfx-labs/acpc) (#303).
+
+v0.26.0 (2026-11-13): `exec` shows the ACP handshake as it happens.
+The command is now in acpc.
+
+v0.25.1 (2026-11-12): docs only. README describes the library and the
+CLI, with a CLI quick start.
+
+v0.25.0 (2026-11-12): CLI agent sessions, and the CLI parses with
+`urfave/cli`. The sessions moved out in v0.27.0.
+
+v0.24.1 (2026-11-11): docs only. README Testing section for host binary
+requirements (#293, #295).
+
+v0.24.0 (2026-11-10): BREAKING. The module is
+`github.com/gfx-labs/acphost` (#288). `Protocol` stays 1. Guide:
+`docs/upgrade-v0.22-v0.28.md`.
+
+v0.23.0 (2026-11-10): optional TCP listener with mutual TLS.
+`Protocol` stays 1. Details in `docs/notes/285-tcp-listen.md`.
+
+- `Spec.Listen`, `Spec.TLS`, `ConnectTCP` (#285, #286).
+
+v0.22.5 (2026-11-09): fix. Join spec errors are checked before host
+preflight (#281, #282).
+
+v0.22.4 (2026-11-09): fix. Client connections close when `Main` returns
+(#277, #278).
+
+v0.22.3 (2026-11-08): docs only. The failed-tests artifact jobshop reads
+(#263, #267).
+
+v0.22.2 (2026-11-08): docs only. Docs-only changes release without
+`release-as` (#261, #265).
 
 v0.22.1 (2026-11-07): docs only. Upgrade guide v0.6 to v0.22,
 `pkg/cgroup` examples, `InScope` and `InCgroup` examples, godoc pass.
