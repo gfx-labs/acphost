@@ -848,6 +848,31 @@ means 3). The readers and `JournalTail` read either form, and use
 of scanning. A host will not start on a compressed journal
 (`ErrJournalCompressed`). Details in `docs/notes/74-journal-zstd-index.md`.
 
+## Reopening a session
+
+After a host restart the agent is a new process. `Reopen(caller, opts)`
+runs `initialize` (skipped when `opts.Initialize` has the welcome line's
+result), then `session/load` if the agent advertises `loadSession`. If
+there is no capability or the agent refuses the load, it starts
+`session/new` and returns `Summarize` of the journal as `Seed`, to put in
+front of the next prompt. A transport error is returned, not turned into
+a fallback. The `Caller` is yours (`Call(method, params)`); it returns a
+JSON-RPC error response as `*acphost.RPCError` so `Reopen` can tell a
+refusal from a dead connection.
+
+```go
+res, err := acphost.Reopen(call, acphost.ReopenOptions{
+	Initialize: welcome.Initialize,
+	SessionID:  saved, // "" means no earlier session
+	Cwd:        dir,
+	Journal:    filepath.Join(sessionDir, "journal.ndjson"),
+	OnRefused:  func(err error) { log.Println("load refused:", err) },
+})
+// res.SessionID is open; prepend res.Seed to the next prompt if not empty.
+```
+
+Details in `docs/notes/306-reopen.md`.
+
 ## Session names and socket path
 
 `CheckSpawn` rejects a session name that is not one path element or
