@@ -12,6 +12,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/gfx-labs/acphost/internal/children"
 	"github.com/gfx-labs/acphost/pkg/reexec"
 	"golang.org/x/sys/unix"
 )
@@ -132,7 +133,7 @@ func Detach(s DetachSpec) (int, error) {
 		cmd.SysProcAttr.UseCgroupFD = true
 		cmd.SysProcAttr.CgroupFD = int(cg.Fd())
 	}
-	err = cmd.Start()
+	err = children.Start(cmd)
 	_ = stW.Close()
 	if hs != nil {
 		// The child holds the scope now, or it never started and

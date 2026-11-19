@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gfx-labs/acphost/internal/children"
 	"github.com/gfx-labs/acphost/pkg/cgroup"
 	"github.com/gfx-labs/acphost/pkg/reexec"
 	"github.com/gfx-labs/acphost/pkg/sandbox"
@@ -259,7 +260,7 @@ func (p *Process) start(s Spec, o options) error {
 		cmd.SysProcAttr.UseCgroupFD = true
 		cmd.SysProcAttr.CgroupFD = int(f.Fd())
 	}
-	start := cmd.Start
+	start := func() error { return children.Start(cmd) }
 	if s.User != nil {
 		var err error
 		if start, iso.User, err = usernsCommand(cmd, *s.User, rootMode); err != nil {

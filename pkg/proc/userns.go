@@ -9,6 +9,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/gfx-labs/acphost/internal/children"
 	"github.com/gfx-labs/acphost/pkg/hostenv"
 	"github.com/gfx-labs/acphost/pkg/reexec"
 	"github.com/gfx-labs/acphost/pkg/trace"
@@ -66,7 +67,7 @@ func usernsCommand(cmd *exec.Cmd, u userns.User, root bool) (start func() error,
 		}
 		defer func() { _ = w.Close() }()
 		cmd.ExtraFiles = reexec.SetExtraFile(cmd.ExtraFiles, reexec.UsernsFd, r)
-		err = cmd.Start()
+		err = children.Start(cmd)
 		_ = r.Close()
 		if err != nil {
 			return err
@@ -80,7 +81,7 @@ func usernsCommand(cmd *exec.Cmd, u userns.User, root bool) (start func() error,
 			trace.Event("run:" + m.tool)
 			c := exec.Command(m.tool, append([]string{pid}, m.args...)...)
 			c.Stderr = &stderr
-			if err := c.Run(); err != nil {
+			if err := children.Run(c); err != nil {
 				_ = w.Close() // child reads EOF and exits
 				_ = cmd.Wait()
 				return xerr.Permanentf("user: %s: %v: %s", m.tool, err, strings.TrimSpace(stderr.String()))

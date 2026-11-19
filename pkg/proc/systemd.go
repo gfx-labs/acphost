@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gfx-labs/acphost/internal/children"
 	"github.com/gfx-labs/acphost/pkg/cgroup"
 	"github.com/gfx-labs/acphost/pkg/reexec"
 )
@@ -78,7 +79,7 @@ func startHolder() (*exec.Cmd, io.WriteCloser, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := h.Start(); err != nil {
+	if err := children.Start(h); err != nil {
 		return nil, nil, fmt.Errorf("cgroup: scope holder: %w", err)
 	}
 	return h, in, nil
