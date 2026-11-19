@@ -14,7 +14,9 @@ status. So every command the library starts goes through
 `children.Start` or `Run`, which records the pid, and `Reap` waits only
 for zombie children that are not recorded. A shared lock orders spawning
 against reaping, so a child that exits at once is recorded before `Reap`
-can see it. Recorded pids are dropped once `/proc/<pid>` is gone.
+can see it. Each recorded pid keeps its process start time, so a pid that the kernel
+reused for an orphan after the `Cmd` was waited for is not mistaken for
+the recorded child. Recorded pids are dropped once `/proc/<pid>` is gone.
 
 Zombie children are found in `/proc/self/task/*/children`, with a scan
 of `/proc` when the kernel lacks it.

@@ -26,7 +26,7 @@ var (
 	// so Reap never sees a child that is started but not yet recorded.
 	mu      sync.RWMutex
 	trackMu sync.Mutex
-	tracked = map[int]struct{}{}
+	tracked = map[int]uint64{} // pid to process start time
 )
 
 // Start starts cmd and records its pid as one the caller waits for.
@@ -36,8 +36,9 @@ func Start(cmd *exec.Cmd) error {
 	if err := cmd.Start(); err != nil {
 		return err
 	}
+	_, _, started := procState(cmd.Process.Pid)
 	trackMu.Lock()
-	tracked[cmd.Process.Pid] = struct{}{}
+	tracked[cmd.Process.Pid] = started
 	trackMu.Unlock()
 	return nil
 }
@@ -50,9 +51,7 @@ func Run(cmd *exec.Cmd) error {
 	return cmd.Wait()
 }
 
-// prune forgets pids that are gone, since their Cmd has waited. A pid
-// that was reused by an orphan before the next Reap would be missed
-// until the pid is gone again; the window is one Reap interval.
+// prune forgets pids that are gone, to bound the map.
 func prune() {
 	trackMu.Lock()
 	defer trackMu.Unlock()
@@ -63,11 +62,21 @@ func prune() {
 	}
 }
 
+// isTracked reports whether pid is a process Start started. A Cmd that
+// was waited for leaves its pid in the map until prune, and the kernel
+// may give that pid to an orphan since, so the start time must match too.
 func isTracked(pid int) bool {
 	trackMu.Lock()
 	defer trackMu.Unlock()
-	_, ok := tracked[pid]
-	return ok
+	want, ok := tracked[pid]
+	if !ok {
+		return false
+	}
+	if _, _, got := procState(pid); want != 0 && got != 0 && got != want {
+		delete(tracked, pid)
+		return false
+	}
+	return true
 }
 
 // Reap waits for every zombie child of this process that Start did not
@@ -98,7 +107,7 @@ func zombieChildren() []int {
 	}
 	var z []int
 	for _, pid := range pids {
-		if st, _ := procState(pid); st == 'Z' {
+		if st, _, _ := procState(pid); st == 'Z' {
 			z = append(z, pid)
 		}
 	}
@@ -143,7 +152,7 @@ func scanChildren() []int {
 		if err != nil {
 			continue
 		}
-		if _, ppid := procState(pid); ppid == me {
+		if _, ppid, _ := procState(pid); ppid == me {
 			pids = append(pids, pid)
 		}
 	}
@@ -151,24 +160,29 @@ func scanChildren() []int {
 }
 
 // procState returns the state letter and parent pid from
-// /proc/pid/stat, or 0 and -1 when it cannot be read.
-func procState(pid int) (state byte, ppid int) {
+// /proc/pid/stat, and the start time in clock ticks since boot. It
+// returns 0, -1 and 0 when the file cannot be read.
+func procState(pid int) (state byte, ppid int, started uint64) {
 	b, err := os.ReadFile("/proc/" + strconv.Itoa(pid) + "/stat")
 	if err != nil {
-		return 0, -1
+		return 0, -1, 0
 	}
 	// The name is in parentheses and may hold spaces and parentheses.
 	i := strings.LastIndexByte(string(b), ')')
 	if i < 0 {
-		return 0, -1
+		return 0, -1, 0
 	}
 	f := strings.Fields(string(b[i+1:]))
 	if len(f) < 2 {
-		return 0, -1
+		return 0, -1, 0
 	}
 	ppid, err = strconv.Atoi(f[1])
 	if err != nil {
-		return 0, -1
+		return 0, -1, 0
 	}
-	return f[0][0], ppid
+	// Field 22 of the line; f starts at field 3.
+	if len(f) > 19 {
+		started, _ = strconv.ParseUint(f[19], 10, 64)
+	}
+	return f[0][0], ppid, started
 }

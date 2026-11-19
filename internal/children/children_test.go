@@ -18,15 +18,6 @@ func gone(pid int) bool {
 	return os.IsNotExist(err)
 }
 
-func itoa(n int) string { return string(appendInt(nil, n)) }
-
-func appendInt(b []byte, n int) []byte {
-	if n >= 10 {
-		b = appendInt(b, n/10)
-	}
-	return append(b, byte('0'+n%10))
-}
-
 // Reap leaves a child that Start started for its Cmd, and reaps one
 // that nothing waits for.
 func TestReap(t *testing.T) {
@@ -50,4 +41,22 @@ func TestReap(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	Reap()
 	assert.NoError(t, tracked.Wait(), "Wait lost its child to the reaper")
+}
+
+// A recorded pid that the kernel gave to another process is not tracked.
+func TestTrackedPidReuse(t *testing.T) {
+	pid := os.Getpid()
+	_, _, started := procState(pid)
+	require.NotZero(t, started)
+	trackMu.Lock()
+	tracked[pid] = started + 1
+	trackMu.Unlock()
+	assert.False(t, isTracked(pid))
+	trackMu.Lock()
+	tracked[pid] = started
+	trackMu.Unlock()
+	assert.True(t, isTracked(pid))
+	trackMu.Lock()
+	delete(tracked, pid)
+	trackMu.Unlock()
 }
