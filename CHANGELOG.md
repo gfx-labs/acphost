@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.3](https://github.com/gfx-labs/acphost/compare/v0.29.2...v0.29.3) (2026-11-19)
+
+
+### Bug fixes
+
+* **host:** reap orphans the subreaper adopts ([#324](https://github.com/gfx-labs/acphost/issues/324)) ([#325](https://github.com/gfx-labs/acphost/issues/325)) ([74f7f14](https://github.com/gfx-labs/acphost/commit/74f7f14f819b8c085aef0da84cbbb4e0497d7ded))
+
 ## [0.29.2](https://github.com/gfx-labs/acphost/compare/v0.29.1...v0.29.2) (2026-11-16)
 
 
