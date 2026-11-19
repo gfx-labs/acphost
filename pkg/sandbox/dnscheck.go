@@ -2,6 +2,7 @@ package sandbox
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gfx-labs/acphost/internal/children"
 	"github.com/gfx-labs/acphost/pkg/reexec"
 	"github.com/gfx-labs/acphost/pkg/xerr"
 )
@@ -54,7 +56,10 @@ func CheckDNS(s Sandbox, name string) error {
 	// pasta execs the command itself, so /proc/self/exe would be pasta.
 	argv := append(slices.Clone(prefix), self, reexec.DNSCheck, ns, name)
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
-	out, err := cmd.CombinedOutput()
+	var buf bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &buf, &buf
+	err = children.Run(cmd)
+	out := buf.Bytes()
 	if err == nil {
 		return nil
 	}

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"syscall"
 
+	"github.com/gfx-labs/acphost/internal/children"
 	"github.com/gfx-labs/acphost/pkg/reexec"
 )
 
@@ -57,7 +58,7 @@ func Pin(types ...string) (*Pinned, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := cmd.Start(); err != nil {
+	if err := children.Start(cmd); err != nil {
 		return nil, fmt.Errorf("pin: %w", err)
 	}
 	p := &Pinned{Paths: map[string]string{}, cmd: cmd, stdin: in}

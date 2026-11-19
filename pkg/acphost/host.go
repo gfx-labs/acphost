@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gfx-labs/acphost/internal/children"
 	"github.com/gfx-labs/acphost/pkg/cgroup"
 	"github.com/gfx-labs/acphost/pkg/proc"
 	"golang.org/x/sys/unix"
@@ -145,6 +146,9 @@ func Main(dir string, opts ...Option) error {
 	// Orphans of the agent reparent to the host and die with its group.
 	if err := unix.Prctl(unix.PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0); err != nil {
 		log.Warn("subreaper", "err", err)
+	} else {
+		// Nothing waits for those orphans otherwise, and zombies hold pids.
+		defer children.StartReaper(log)()
 	}
 	h := &Host{
 		dir: dir, spec: spec, log: log.With("session", spec.Session), opts: o, sup: sup,
