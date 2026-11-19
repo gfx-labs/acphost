@@ -10,6 +10,7 @@
 package children
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"strconv"
@@ -56,7 +57,7 @@ func prune() {
 	trackMu.Lock()
 	defer trackMu.Unlock()
 	for pid := range tracked {
-		if err := unix.Kill(pid, 0); err == syscall.ESRCH {
+		if err := unix.Kill(pid, 0); errors.Is(err, syscall.ESRCH) {
 			delete(tracked, pid)
 		}
 	}
