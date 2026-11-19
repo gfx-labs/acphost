@@ -21,7 +21,7 @@ func TestHostReapsOrphans(t *testing.T) {
 	orphan := filepath.Join(dir, "orphan.pid")
 	agentPid := filepath.Join(dir, "agent.pid")
 	script := "#!/bin/sh\n" +
-		"echo $$ > " + agentPid + ".tmp && mv " + agentPid + ".tmp " + agentPid + "\n" +
+		"echo $$ > " + agentPid + "\n" +
 		"(sleep 0.3 & echo $! > " + orphan + ")\n" +
 		"exec sleep 30\n"
 	require.NoError(t, os.WriteFile(agent, []byte(script), 0o700))

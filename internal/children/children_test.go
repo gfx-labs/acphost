@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -31,20 +32,15 @@ func appendInt(b []byte, n int) []byte {
 func TestReap(t *testing.T) {
 	require.NoError(t, unix.Prctl(unix.PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0))
 
-	tracked := exec.Command("true")
+	tracked := exec.Command("sh", "-c", "exit 0")
 	require.NoError(t, Start(tracked))
 
 	// An orphan: the subshell exits at once, and the sleep reparents to us.
 	orphan := exec.Command("sh", "-c", "(sleep 0.1 & echo $!) ")
 	out, err := orphan.Output()
 	require.NoError(t, err)
-	var opid int
-	for _, c := range out {
-		if c >= '0' && c <= '9' {
-			opid = opid*10 + int(c-'0')
-		}
-	}
-	require.NotZero(t, opid)
+	opid, err := strconv.Atoi(strings.TrimSpace(string(out)))
+	require.NoError(t, err)
 
 	// Both are zombies after a while; the tracked one must survive.
 	require.Eventually(t, func() bool {
