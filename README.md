@@ -97,7 +97,7 @@ Both give old and new code for each breaking change. In short:
    `exec`, `attach`, `cancel`, `ls` and `rm` commands, which left the
    `acphost` CLI (v0.27; they were only in v0.25 and v0.26).
 
-`Protocol` is 1 in every release to date (v0.1.0 to v0.29.0). From v0.3: `docs/notes/68-upgrade-v0.3-v0.6.md`.
+`Protocol` is 1 in every release to date (v0.1.0 to v0.29.3). From v0.3: `docs/notes/68-upgrade-v0.3-v0.6.md`.
 
 ## Library quick start
 
@@ -923,6 +923,23 @@ for Main and removes supervisor.pid. While Main runs its SIGTERM and SIGINT
 handlers apply to the whole test process. See `docs/notes/114-acphosttest.md`.
 
 ## Release notes
+
+v0.29.3 (2026-11-19): the host reaps orphans it adopts. `Protocol` stays
+1. Details in `docs/notes/324-reap-orphans.md`.
+
+- A process the agent leaves behind reparents to the host (it is a
+  subreaper) and is now waited for, so it no longer stays a zombie
+  until the host exits (#324, #325).
+
+v0.29.2 (2026-11-16): `Protocol` stays 1. Details in
+`docs/notes/320-systemd-oom-holder.md`.
+
+- With the systemd driver the scope holder is kept alive through an OOM
+  kill, so the OOM report is not lost (#320, #321).
+
+v0.29.1 (2026-11-16): docs only. Adds the v0.22 to v0.28 upgrade guide
+and links it from the README, and the v0.6 to v0.22 guide uses the old
+module path (#312 to #316, #318).
 
 v0.29.0 (2026-11-16): ACP v2 turns end on the idle `state_update`.
 `Protocol` stays 1. Details in `docs/notes/2026-11-16-acp-v2-turns.md`.

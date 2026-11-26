@@ -1,14 +1,14 @@
 # Upgrading from v0.22 to v0.28
 
-For a caller on v0.22.x moving to v0.28.0. v0.29.0 is out; its one change
-is at the end. Earlier steps: `docs/upgrade-v0.6-v0.22.md`.
+For a caller on v0.22.x moving to v0.28.0. v0.29.3 is the latest; the
+v0.29.0 change is at the end (v0.29.1 to v0.29.3 need nothing from a caller). Earlier steps: `docs/upgrade-v0.6-v0.22.md`.
 
-`Protocol` is 1 in every release from v0.22.0 to v0.29.0 (the constant in
+`Protocol` is 1 in every release from v0.22.0 to v0.29.3 (the constant in
 `pkg/acphost/spec.go`). No change in this range touched spec.json's
 required keys, hello/welcome, the extension methods or the journal lines,
-so `Connect` and `ReadSpec` accept any v0.22 to v0.29 client with any
-v0.22 to v0.29 host. The exported API of the library packages only grew:
-`go doc` of `pkg/` at v0.22.5 and at v0.29.0 differ by added names
+so `Connect` and `ReadSpec` accept any v0.22 to v0.29.3 client with any
+v0.22 to v0.29.3 host. The exported API of the library packages only grew:
+`go doc` of `pkg/` at v0.22.5 and at v0.29.3 differ by added names
 (`ConnectTCP`, `ReadListen`, `WithListening`, `WithLogger`, `Reopen` and
 their types). The one thing a caller must change is the module path.
 
@@ -54,7 +54,7 @@ go: github.com/elee1766/acphost@v0.24.0 requires github.com/elee1766/acphost@v0.
 ```
 
 The proxy lists the same tags under both paths, so `go list -m -versions`
-for the old path shows v0.24.0 to v0.29.0 too. They cannot be fetched
+for the old path shows v0.24.0 to v0.29.3 too. They cannot be fetched
 there. The reverse fails the same way (`github.com/gfx-labs/acphost@v0.23.0`
 declares the old path). The package layout under `pkg/` is the same on
 both sides of the move, so only the prefix of each import changes.
