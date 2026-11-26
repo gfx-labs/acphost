@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.4](https://github.com/gfx-labs/acphost/compare/v0.29.3...v0.29.4) (2026-11-26)
+
+
+### Documentation
+
+* add v0.29.1 to v0.29.3 to release notes ([#328](https://github.com/gfx-labs/acphost/issues/328)) ([#329](https://github.com/gfx-labs/acphost/issues/329)) ([501a6d1](https://github.com/gfx-labs/acphost/commit/501a6d1806d28fd86c52e2f945c36c87eb873497))
+
 ## [0.29.3](https://github.com/gfx-labs/acphost/compare/v0.29.2...v0.29.3) (2026-11-19)
 
 
